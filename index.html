@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Realpoint — Issue Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A0A0A;
+    --surface:#141414;
+    --surface-2:#1B1B1B;
+    --border: rgba(255,255,255,0.08);
+    --border-strong: rgba(255,255,255,0.16);
+    --text:#F2F2F0;
+    --muted:#93938E;
+    --teal:#2DD4BF;
+    --amber:#FBBF24;
+    --red:#F97066;
+    --green:#34D399;
+    --indigo:#818CF8;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',system-ui,sans-serif;
+    padding:28px 20px 60px;
+  }
+  .wrap{max-width:1180px;margin:0 auto;}
+  header{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:16px;
+    margin-bottom:22px;
+    flex-wrap:wrap;
+  }
+  .brand{display:flex;align-items:center;gap:10px;}
+  .brand .mark{
+    width:30px;height:30px;border-radius:8px;
+    background:linear-gradient(135deg,var(--teal),#0d8f82);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Sora',sans-serif;font-weight:800;color:#052e2b;font-size:16px;
+  }
+  h1{
+    font-family:'Sora',sans-serif;
+    font-weight:700;
+    font-size:22px;
+    margin:0;
+    letter-spacing:-0.01em;
+  }
+  .sub{color:var(--muted);font-size:13px;margin-top:2px;}
+  .stats{display:flex;gap:10px;flex-wrap:wrap;}
+  .stat{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:8px 14px;
+    min-width:76px;
+    text-align:center;
+  }
+  .stat b{display:block;font-family:'Sora',sans-serif;font-size:18px;}
+  .stat span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;}
+
+  .toolbar{
+    display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;align-items:center;
+  }
+  .toolbar input[type=text]{
+    flex:1;min-width:200px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    color:var(--text);
+    padding:9px 12px;
+    border-radius:9px;
+    font-size:13px;
+    outline:none;
+  }
+  .toolbar input[type=text]:focus{border-color:var(--teal);}
+  select{
+    background:var(--surface);
+    border:1px solid var(--border);
+    color:var(--text);
+    padding:9px 10px;
+    border-radius:9px;
+    font-size:13px;
+    outline:none;
+  }
+  button{font-family:inherit;cursor:pointer;}
+  .btn-primary{
+    background:var(--teal);
+    color:#052e2b;
+    border:none;
+    font-weight:600;
+    padding:9px 16px;
+    border-radius:9px;
+    font-size:13px;
+    transition:transform .12s ease, filter .12s ease;
+  }
+  .btn-primary:hover{filter:brightness(1.08);transform:translateY(-1px);}
+
+  .board{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:16px;
+  }
+  @media (max-width:900px){ .board{grid-template-columns:1fr;} }
+
+  .col{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:14px;
+    min-height:200px;
+  }
+  .col-head{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);
+  }
+  .col-head h2{
+    font-family:'Sora',sans-serif;font-size:14px;margin:0;
+    display:flex;align-items:center;gap:8px;letter-spacing:.02em;
+  }
+  .dot{width:8px;height:8px;border-radius:50%;}
+  .dot.open{background:var(--red);}
+  .dot.progress{background:var(--amber);}
+  .dot.resolved{background:var(--green);}
+  .count{
+    font-size:11px;color:var(--muted);
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    padding:2px 8px;border-radius:20px;
+  }
+
+  .card{
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    border-radius:11px;
+    padding:12px 13px;
+    margin-bottom:10px;
+    transition:border-color .15s ease, transform .15s ease;
+  }
+  .card:hover{border-color:var(--border-strong);transform:translateY(-1px);}
+  .card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+  .card-title{font-weight:600;font-size:13.5px;line-height:1.35;}
+  .prio{font-size:14px;flex-shrink:0;line-height:1;}
+  .area{
+    display:inline-block;margin-top:6px;
+    font-size:10.5px;color:var(--indigo);
+    background:rgba(129,140,248,0.12);
+    border:1px solid rgba(129,140,248,0.25);
+    padding:2px 8px;border-radius:20px;
+  }
+  .desc{
+    font-size:12px;color:var(--muted);
+    margin-top:8px;line-height:1.5;
+    white-space:pre-wrap;
+  }
+  .card-foot{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-top:10px;padding-top:9px;border-top:1px solid var(--border);
+  }
+  .date{font-size:10.5px;color:var(--muted);}
+  .actions{display:flex;gap:6px;}
+  .actions button{
+    background:none;border:1px solid var(--border);
+    color:var(--muted);border-radius:7px;
+    width:26px;height:26px;font-size:12px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .actions button:hover{border-color:var(--teal);color:var(--teal);}
+  .actions button.del:hover{border-color:var(--red);color:var(--red);}
+
+  .empty{color:var(--muted);font-size:12.5px;text-align:center;padding:20px 8px;}
+
+  .modal-bg{
+    position:fixed;inset:0;background:rgba(0,0,0,0.6);
+    display:none;align-items:center;justify-content:center;z-index:50;
+    padding:20px;
+  }
+  .modal-bg.show{display:flex;}
+  .modal{
+    background:var(--surface);
+    border:1px solid var(--border-strong);
+    border-radius:16px;
+    padding:22px;width:100%;max-width:460px;
+  }
+  .modal h3{font-family:'Sora',sans-serif;margin:0 0 16px;font-size:16px;}
+  .field{margin-bottom:12px;}
+  .field label{font-size:11.5px;color:var(--muted);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;}
+  .field input, .field textarea, .field select{
+    width:100%;background:var(--surface-2);border:1px solid var(--border);
+    color:var(--text);padding:9px 11px;border-radius:8px;font-size:13px;
+    font-family:inherit;outline:none;
+  }
+  .field textarea{resize:vertical;min-height:70px;}
+  .field input:focus, .field textarea:focus, .field select:focus{border-color:var(--teal);}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;}
+  .btn-ghost{
+    background:none;border:1px solid var(--border);color:var(--muted);
+    padding:9px 14px;border-radius:9px;font-size:13px;
+  }
+  .btn-ghost:hover{color:var(--text);border-color:var(--border-strong);}
+
+  .loading{color:var(--muted);font-size:13px;text-align:center;padding:40px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <div class="brand">
+        <div class="mark">R</div>
+        <h1>Realpoint — Issue Tracker</h1>
+      </div>
+      <div class="sub">Bugs &amp; gaps found while testing. Add, move, and close them out as they're fixed.</div>
+    </div>
+    <div class="stats" id="stats"></div>
+  </header>
+
+  <div class="toolbar">
+    <input type="text" id="search" placeholder="Search issues…">
+    <select id="filterArea">
+      <option value="">All areas</option>
+    </select>
+    <button class="btn-primary" id="addBtn">+ Add issue</button>
+  </div>
+
+  <div id="loading" class="loading">Loading issues…</div>
+  <div class="board" id="board" style="display:none;">
+    <div class="col" data-status="open">
+      <div class="col-head">
+        <h2><span class="dot open"></span> Open</h2>
+        <span class="count" id="count-open">0</span>
+      </div>
+      <div id="list-open"></div>
+    </div>
+    <div class="col" data-status="progress">
+      <div class="col-head">
+        <h2><span class="dot progress"></span> In Progress</h2>
+        <span class="count" id="count-progress">0</span>
+      </div>
+      <div id="list-progress"></div>
+    </div>
+    <div class="col" data-status="resolved">
+      <div class="col-head">
+        <h2><span class="dot resolved"></span> Resolved</h2>
+        <span class="count" id="count-resolved">0</span>
+      </div>
+      <div id="list-resolved"></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h3 id="modalTitle">Add issue</h3>
+    <div class="field">
+      <label>Title</label>
+      <input type="text" id="f-title" placeholder="e.g. Bookmark button not working">
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>Area</label>
+        <input type="text" id="f-area" placeholder="e.g. Player, Library, Search">
+      </div>
+      <div class="field">
+        <label>Priority</label>
+        <select id="f-priority">
+          <option value="critical">🔥 Critical</option>
+          <option value="high">⚡ High</option>
+          <option value="medium" selected>🌿 Medium</option>
+          <option value="low">✨ Low</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>Description</label>
+      <textarea id="f-desc" placeholder="What's broken, and where you saw it"></textarea>
+    </div>
+    <div class="field">
+      <label>Status</label>
+      <select id="f-status">
+        <option value="open">Open</option>
+        <option value="progress">In Progress</option>
+        <option value="resolved">Resolved</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="cancelBtn">Cancel</button>
+      <button class="btn-primary" id="saveBtn">Save issue</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'realpoint-issues-v1';
+let issues = [];
+let editingId = null;
+
+const priorityIcon = { critical:'🔥', high:'⚡', medium:'🌿', low:'✨' };
+
+const seedIssues = [
+  {
+    title: 'Auto-generated Mux thumbnail did not appear',
+    area: 'Media Pipeline',
+    priority: 'high',
+    status: 'open',
+    desc: 'Creator uploaded without custom artwork; Mux thumbnail fallback (image.mux.com/{playback_id}/thumbnail.jpg) never populated titles.poster after status flipped to live.'
+  },
+  {
+    title: 'Creator earnings show 100% instead of 70%',
+    area: 'Earnings',
+    priority: 'critical',
+    status: 'open',
+    desc: 'Rental of ₦50 credited full ₦50 to creator. Trigger should insert amount_paid * 0.70 into earnings_ledger, not the full amount.'
+  },
+  {
+    title: 'Video does not auto-adjust to landscape on playback',
+    area: 'Player',
+    priority: 'high',
+    status: 'open',
+    desc: 'Playing a title does not enter fullscreen/landscape orientation automatically on mobile. Player container likely needs proper aspect-ratio handling and an orientation-lock-on-play behavior.'
+  },
+  {
+    title: 'No subtitle option in player',
+    area: 'Player',
+    priority: 'medium',
+    status: 'open',
+    desc: 'No caption/subtitle toggle available. Needs creator-side subtitle upload plus enabling Mux Player\'s caption menu.'
+  },
+  {
+    title: 'No seek forward/backward controls',
+    area: 'Player',
+    priority: 'high',
+    status: 'open',
+    desc: 'Player is missing rewind/fast-forward controls — likely a stripped-down custom control bar rather than Mux Player\'s default controls.'
+  },
+  {
+    title: 'Save/bookmark button not working',
+    area: 'Home / Title Detail',
+    priority: 'medium',
+    status: 'open',
+    desc: 'Tapping the bookmark icon does nothing. May not have been covered in the earlier bookmark-wiring pass on every card/sheet variant.'
+  },
+  {
+    title: 'Rented title does not appear in Library',
+    area: 'Library',
+    priority: 'high',
+    status: 'open',
+    desc: 'After renting "kuve", it did not show up under any rented/purchased view in Library. Library likely still queries hardcoded slices rather than a real rentals-based query.'
+  },
+  {
+    title: 'New upload not sorted first on Home',
+    area: 'Home',
+    priority: 'medium',
+    status: 'open',
+    desc: 'Newly live title "kuve" did not appear at the top of Home/New rails — had to search for it. Query likely not ordering by created_at desc, or not included in the "New" rail logic at all.'
+  },
+  {
+    title: 'Search screen does not show search history',
+    area: 'Search',
+    priority: 'low',
+    status: 'open',
+    desc: 'Recent Searches section does not persist actual past searches — only static example items were wired earlier, not real per-user search history.'
+  }
+];
+
+const historicalIssues = [
+  { title:'Desktop AuthScreen layout broken (stretched edge-to-edge)', area:'Auth', priority:'medium', status:'resolved', desc:'Sign-in/sign-up form rendered full browser width on desktop instead of a centered card. Fixed by constraining to max-width ~420px with mx-auto, matching the app\'s mobile-first container pattern.' },
+  { title:'Sign In / Sign Up / Forgot Password buttons had no real logic', area:'Auth', priority:'critical', status:'resolved', desc:'All three buttons were fully mock — no Supabase calls, no session created. Wired to supabase.auth.signInWithPassword / signUp / resetPasswordForEmail, plus a useAuth() hook exposing session state app-wide.' },
+  { title:'No sign-out option in Profile', area:'Profile', priority:'low', status:'resolved', desc:'Added a Sign Out action visible only when authenticated, calling signOut() from the auth hook.' },
+  { title:'CRITICAL: donations could be misattributed to any creator', area:'Security', priority:'critical', status:'resolved', desc:'creator_id was trusted from client input on donation inserts. Fixed with a server-side trigger deriving creator_id from the related title, ignoring any client-supplied value.' },
+  { title:'ad_impressions had no update/delete restrictions', area:'Security', priority:'medium', status:'resolved', desc:'Table should be append-only. Added RLS allowing INSERT only, no UPDATE/DELETE for non-admins.' },
+  { title:'creator_profiles publicly exposed invited_by and other fields', area:'Security', priority:'medium', status:'resolved', desc:'Restricted SELECT so only admins and the creator\'s own row can read creator_profiles.' },
+  { title:'Guest tapping "Unlock for ₦150" did nothing', area:'Monetization', priority:'high', status:'resolved', desc:'The Unlock button on the title detail sheet had no onClick at all. Wired to check auth, open sign-in with a contextual message, and resume the rental after login.' },
+  { title:'App-wide button audit: many buttons were visual-only no-ops', area:'App-wide', priority:'high', status:'resolved', desc:'Full audit surfaced dead buttons across Home, Search, Wallet, Profile, Creator Studio, Kids Mode (hero Watch, bookmark icons, hover play overlays, swipe discovery Play, daily drop/recap actions, search trending moods/recent searches, wallet top-up/pass callbacks, profile menu items, creator upload/payout stubs). Wired in priority batches (playback, unlock/bookmarks, search/nav, creator studio).' },
+  { title:'Wallet had no real payment gateway behind it', area:'Wallet / Payments', priority:'critical', status:'resolved', desc:'Add Airtime / Add to Wallet / pass purchases had empty callbacks. Wired to Paystack with server-side transaction verification before crediting, atomic wallet-based rental debits, and automatic earnings_ledger triggering.' },
+  { title:'Kids Mode used a static PIN concept instead of a real one-time code', area:'Kids Mode', priority:'high', status:'resolved', desc:'Replaced with an email-based OTP flow (6-digit code sent via Resend to the parent\'s registered email) required both entering and exiting Kids Mode.' },
+  { title:'Resend OTP emails failing with non-2xx / ByteString error', area:'Kids Mode / Email', priority:'high', status:'resolved', desc:'Caused by a malformed RESEND_API_KEY secret (trailing whitespace from copy-paste). Fixed by deleting and re-adding the secret cleanly.' },
+  { title:'Wrong OTP code showed a generic server-error message', area:'Kids Mode', priority:'medium', status:'resolved', desc:'Invalid/expired/used codes surfaced the same "Edge Function returned a non-2xx" message as real server failures. Fixed by returning structured { success:false, reason } responses and showing specific inline messages per case.' },
+  { title:'Signup confirmation email shows wrong sender name/domain', area:'Email', priority:'medium', status:'progress', desc:'Emails currently show "MoodStream Elevate" via a Lovable/Supabase default sender instead of Realpoint branding on the notify.realpoint.ng subdomain. Blocked on QServer support adding NS + TXT records for the notify subdomain (their DNS panel doesn\'t expose NS records directly) — support ticket submitted, awaiting reply.' },
+  { title:'Mux upload failed with 401 Unauthorized', area:'Media Pipeline', priority:'critical', status:'resolved', desc:'Caused by an incorrect MUX_TOKEN_ID/MUX_TOKEN_SECRET pair stored as secrets. Fixed by generating a fresh token with Video Read+Write permission and re-adding both secrets cleanly.' },
+  { title:'Mood selector in Creator upload form not registering clicks', area:'Creator Studio', priority:'high', status:'resolved', desc:'Mood cards were built as motion.div with a layout prop, which swallowed tap gestures on some input methods. Converted to motion.button matching the working genre-item pattern.' },
+  { title:'"Upload title" button silently disabled with no explanation', area:'Creator Studio', priority:'medium', status:'resolved', desc:'Button was correctly gated behind required fields (title, genre, mood, file) but gave zero feedback on why it was disabled. Added inline missing-field hints, visual markers on unmet fields, and a toast on click if still invalid.' },
+  { title:'Title insert blocked by RLS — missing creator_profiles row', area:'Creator Studio / Security', priority:'high', status:'resolved', desc:'RLS policy required a matching creator_profiles row for the uploader, which hadn\'t been created yet for the test account. Added manually via SQL editor / table UI.' },
+  { title:'Title insert blocked by RLS — missing creator role in user_roles', area:'Creator Studio / Security', priority:'high', status:'resolved', desc:'INSERT policy also required has_role(auth.uid(), \'creator\'), checked against a separate user_roles table, not creator_profiles. Added a matching (user_id, role=\'creator\') row.' }
+];
+
+const round2Issues = [
+  { title:'creator_profiles publicly exposes full row incl. invited_by (regression)', area:'Security', priority:'critical', status:'open', desc:'A later "Public reads safe creator columns" policy was added with USING(true), exposing the entire row (including invited_by admin/invite relationships) to anon/authenticated — reopening a hole we\'d already closed once. Fix: replace with a public view exposing only id + display_name, keep base-table policies restricted.' },
+  { title:'kids_mode_otps SELECT policy scope unconfirmed', area:'Security / Kids Mode', priority:'medium', status:'open', desc:'Missing INSERT/UPDATE policies are correct by design (writes only via service-role Edge Functions). Need to confirm the existing SELECT policy restricts each user to their own OTP rows only, not all rows.' },
+  { title:'"Fun picks" rail silently failing — 400 error swallowed as empty', area:'Home', priority:'high', status:'resolved', desc:'getTitlesByMood concatenated a second title_moods!inner embed onto TITLE_SELECT\'s existing title_moods embed, causing PostgREST to return a 400 (42803: aggregate functions not allowed in FROM clause). Error was swallowed into an empty array, so ContentRail unmounted the rail and "Short Escapes" visually slid up into its place — looked like a relabel bug, was actually two separate rails plus a hidden query error. Fixed via a single title_moods!inner embed variant in getTitlesByMood, and surfacing real query errors instead of silently defaulting to [].' },
+  { title:'Discover ranking + Continue Watching rail order', area:'Home', priority:'medium', status:'resolved', desc:'Discover now ranks active-mood titles by a stars+views composite score and auto-slides between top results. Continue Watching repositioned to render directly after Discover. (An earlier overcorrection also touched Trending/Short Escapes/Mood Journey and pulled Discover from other moods — reverted per feedback; only these two changes were intended.)' }
+];
+
+async function loadIssues(){
+  try{
+    const res = await window.storage.get(STORAGE_KEY, false);
+    issues = res && res.value ? JSON.parse(res.value) : null;
+  }catch(e){
+    issues = null;
+  }
+  if(!issues){
+    issues = seedIssues.map((it,i)=>({
+      id: 'seed-'+i+'-'+Date.now(),
+      ...it,
+      createdAt: new Date().toISOString()
+    }));
+    await saveIssues();
+  }
+
+  // one-time import of historical (already-resolved-by-the-time-tracker-existed) issues
+  let migrated = false;
+  try{
+    const flag = await window.storage.get('realpoint-historical-imported-v1', false);
+    migrated = !!(flag && flag.value === 'true');
+  }catch(e){ migrated = false; }
+
+  if(!migrated){
+    const base = Date.now() - historicalIssues.length * 3600 * 1000;
+    const imported = historicalIssues.map((it,i)=>({
+      id: 'hist-'+i+'-'+Date.now(),
+      ...it,
+      createdAt: new Date(base + i * 3600 * 1000).toISOString()
+    }));
+    issues = issues.concat(imported);
+    await saveIssues();
+    try{ await window.storage.set('realpoint-historical-imported-v1', 'true', false); }catch(e){}
+  }
+
+  document.getElementById('loading').style.display='none';
+  document.getElementById('board').style.display='grid';
+  render();
+}
+
+async function saveIssues(){
+  try{
+    await window.storage.set(STORAGE_KEY, JSON.stringify(issues), false);
+  }catch(e){
+    console.error('Failed to save issues', e);
+  }
+}
+
+function fmtDate(iso){
+  const d = new Date(iso);
+  return d.toLocaleDateString(undefined,{month:'short',day:'numeric'});
+}
+
+function render(){
+  const q = document.getElementById('search').value.toLowerCase();
+  const areaFilter = document.getElementById('filterArea').value;
+
+  // populate area filter options
+  const areas = [...new Set(issues.map(i=>i.area).filter(Boolean))].sort();
+  const sel = document.getElementById('filterArea');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">All areas</option>' + areas.map(a=>`<option value="${a}">${a}</option>`).join('');
+  sel.value = current;
+
+  const filtered = issues.filter(it=>{
+    const matchesQ = !q || (it.title.toLowerCase().includes(q) || (it.desc||'').toLowerCase().includes(q));
+    const matchesArea = !areaFilter || it.area === areaFilter;
+    return matchesQ && matchesArea;
+  });
+
+  ['open','progress','resolved'].forEach(status=>{
+    const list = filtered.filter(i=>i.status===status)
+      .sort((a,b)=> new Date(b.createdAt)-new Date(a.createdAt));
+    const el = document.getElementById('list-'+status);
+    document.getElementById('count-'+status).textContent = list.length;
+    if(list.length===0){
+      el.innerHTML = '<div class="empty">Nothing here.</div>';
+      return;
+    }
+    el.innerHTML = list.map(it=>cardHtml(it)).join('');
+  });
+
+  // stats
+  const total = issues.length;
+  const open = issues.filter(i=>i.status==='open').length;
+  const resolved = issues.filter(i=>i.status==='resolved').length;
+  document.getElementById('stats').innerHTML = `
+    <div class="stat"><b>${total}</b><span>Total</span></div>
+    <div class="stat"><b>${open}</b><span>Open</span></div>
+    <div class="stat"><b>${resolved}</b><span>Resolved</span></div>
+  `;
+
+  // wire card buttons
+  document.querySelectorAll('[data-move]').forEach(btn=>{
+    btn.onclick = ()=> moveIssue(btn.dataset.id, btn.dataset.move);
+  });
+  document.querySelectorAll('[data-edit]').forEach(btn=>{
+    btn.onclick = ()=> openModal(btn.dataset.edit);
+  });
+  document.querySelectorAll('[data-del]').forEach(btn=>{
+    btn.onclick = ()=> deleteIssue(btn.dataset.del);
+  });
+}
+
+function cardHtml(it){
+  const nextMap = {open:'progress', progress:'resolved', resolved:null};
+  const prevMap = {open:null, progress:'open', resolved:'progress'};
+  const next = nextMap[it.status];
+  const prev = prevMap[it.status];
+  return `
+    <div class="card">
+      <div class="card-top">
+        <div class="card-title">${escapeHtml(it.title)}</div>
+        <div class="prio" title="${it.priority}">${priorityIcon[it.priority]||'🌿'}</div>
+      </div>
+      ${it.area ? `<span class="area">${escapeHtml(it.area)}</span>` : ''}
+      ${it.desc ? `<div class="desc">${escapeHtml(it.desc)}</div>` : ''}
+      <div class="card-foot">
+        <span class="date">${fmtDate(it.createdAt)}</span>
+        <div class="actions">
+          ${prev ? `<button data-move="${prev}" data-id="${it.id}" title="Move back">←</button>` : ''}
+          ${next ? `<button data-move="${next}" data-id="${it.id}" title="Move forward">→</button>` : ''}
+          <button data-edit="${it.id}" title="Edit">✎</button>
+          <button class="del" data-del="${it.id}" title="Delete">✕</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function escapeHtml(s){
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+async function moveIssue(id, newStatus){
+  const it = issues.find(i=>i.id===id);
+  if(!it) return;
+  it.status = newStatus;
+  await saveIssues();
+  render();
+}
+
+async function deleteIssue(id){
+  if(!confirm('Delete this issue?')) return;
+  issues = issues.filter(i=>i.id!==id);
+  await saveIssues();
+  render();
+}
+
+function openModal(id){
+  editingId = id || null;
+  const modalTitle = document.getElementById('modalTitle');
+  if(id){
+    const it = issues.find(i=>i.id===id);
+    modalTitle.textContent = 'Edit issue';
+    document.getElementById('f-title').value = it.title;
+    document.getElementById('f-area').value = it.area||'';
+    document.getElementById('f-priority').value = it.priority||'medium';
+    document.getElementById('f-desc').value = it.desc||'';
+    document.getElementById('f-status').value = it.status||'open';
+  }else{
+    modalTitle.textContent = 'Add issue';
+    document.getElementById('f-title').value = '';
+    document.getElementById('f-area').value = '';
+    document.getElementById('f-priority').value = 'medium';
+    document.getElementById('f-desc').value = '';
+    document.getElementById('f-status').value = 'open';
+  }
+  document.getElementById('modalBg').classList.add('show');
+}
+
+function closeModal(){
+  document.getElementById('modalBg').classList.remove('show');
+  editingId = null;
+}
+
+async function saveModal(){
+  const title = document.getElementById('f-title').value.trim();
+  if(!title){ alert('Give the issue a title.'); return; }
+  const data = {
+    title,
+    area: document.getElementById('f-area').value.trim(),
+    priority: document.getElementById('f-priority').value,
+    desc: document.getElementById('f-desc').value.trim(),
+    status: document.getElementById('f-status').value
+  };
+  if(editingId){
+    const it = issues.find(i=>i.id===editingId);
+    Object.assign(it, data);
+  }else{
+    issues.push({ id: 'i-'+Date.now()+'-'+Math.random().toString(36).slice(2,7), createdAt: new Date().toISOString(), ...data });
+  }
+  await saveIssues();
+  closeModal();
+  render();
+}
+
+document.getElementById('addBtn').onclick = ()=> openModal(null);
+document.getElementById('cancelBtn').onclick = closeModal;
+document.getElementById('saveBtn').onclick = saveModal;
+document.getElementById('modalBg').onclick = (e)=>{ if(e.target.id==='modalBg') closeModal(); };
+document.getElementById('search').oninput = render;
+document.getElementById('filterArea').onchange = render;
+
+loadIssues();
+</script>
+</body>
+</html>
