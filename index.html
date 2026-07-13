@@ -266,6 +266,9 @@
     <select id="filterArea">
       <option value="">All areas</option>
     </select>
+    <button class="btn-ghost" id="exportBtn">↓ Export JSON</button>
+    <button class="btn-ghost" id="importBtn">↑ Import JSON</button>
+    <input type="file" id="importFile" accept=".json" style="display:none;">
     <button class="btn-primary" id="addBtn">+ Add issue</button>
   </div>
 
@@ -727,6 +730,58 @@ document.getElementById('saveBtn').onclick = saveModal;
 document.getElementById('modalBg').onclick = (e)=>{ if(e.target.id==='modalBg') closeModal(); };
 document.getElementById('search').oninput = render;
 document.getElementById('filterArea').onchange = render;
+
+/* ============================= EXPORT / IMPORT ============================= */
+document.getElementById('exportBtn').onclick = ()=>{
+  try{
+    const blob = new Blob([JSON.stringify(issues, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `realpoint-issues-backup-${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }catch(e){
+    alert('Export failed. See console for details.');
+    console.error(e);
+  }
+};
+
+document.getElementById('importBtn').onclick = ()=>{
+  document.getElementById('importFile').click();
+};
+
+document.getElementById('importFile').onchange = (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = async (evt)=>{
+    try{
+      const parsed = JSON.parse(evt.target.result);
+      if(!Array.isArray(parsed)) throw new Error('Not a valid issues export.');
+      const replace = confirm(
+        'Import ' + parsed.length + ' issue(s).\n\n' +
+        'Click OK to REPLACE all current issues with this file.\n' +
+        'Click Cancel to MERGE this file into your current issues instead.'
+      );
+      if(replace){
+        issues = parsed;
+      } else {
+        const existingIds = new Set(issues.map(i=>i.id));
+        const merged = parsed.filter(i=>!existingIds.has(i.id));
+        issues = issues.concat(merged);
+      }
+      await saveIssues();
+      render();
+      alert('Import complete.');
+    }catch(err){
+      alert('Could not read that file — make sure it is a valid Realpoint issues export JSON.');
+      console.error(err);
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+};
 
 loadIssues();
 </script>
