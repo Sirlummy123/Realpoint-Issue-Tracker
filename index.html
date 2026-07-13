@@ -205,9 +205,49 @@
   .btn-ghost:hover{color:var(--text);border-color:var(--border-strong);}
 
   .loading{color:var(--muted);font-size:13px;text-align:center;padding:40px;}
+
+  /* ---------- LOCK SCREEN ---------- */
+  #lock-screen{
+    position:fixed; inset:0; background:var(--bg); z-index:500;
+    display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  #lock-card{
+    background:var(--surface); border:1px solid var(--border-strong); border-radius:16px;
+    padding:32px 30px; width:100%; max-width:340px; text-align:center;
+  }
+  #lock-card .lock-mark{
+    width:40px;height:40px;border-radius:10px; margin:0 auto 14px;
+    background:linear-gradient(135deg,var(--teal),#0d8f82);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Sora',sans-serif;font-weight:800;color:#052e2b;font-size:19px;
+  }
+  #lock-card h1{font-family:'Sora',sans-serif; font-weight:700; font-size:18px; margin:0 0 4px;}
+  #lock-card .lock-tag{font-size:11.5px; color:var(--muted); margin-bottom:22px;}
+  #lock-card input{
+    width:100%; text-align:center; letter-spacing:2px; margin-bottom:12px;
+    background:var(--surface-2); border:1px solid var(--border); color:var(--text);
+    padding:10px 11px; border-radius:9px; font-size:13px; font-family:inherit; outline:none;
+  }
+  #lock-card input:focus{border-color:var(--teal);}
+  #lock-card button{width:100%;}
+  #lock-error{color:var(--red); font-size:11.5px; margin-top:10px; min-height:16px;}
+  #app-root{display:none;}
 </style>
 </head>
 <body>
+
+<div id="lock-screen">
+  <div id="lock-card">
+    <div class="lock-mark">R</div>
+    <h1>Realpoint — Issue Tracker</h1>
+    <div class="lock-tag">Access required</div>
+    <input type="password" id="lock-password" placeholder="Password" autocomplete="off">
+    <button class="btn-primary" id="lock-submit">Unlock</button>
+    <div id="lock-error"></div>
+  </div>
+</div>
+
+<div id="app-root">
 <div class="wrap">
 
   <header>
@@ -297,7 +337,49 @@
   </div>
 </div>
 
+</div><!-- /#app-root -->
+
 <script>
+/* ============================= ACCESS LOCK ============================= */
+/* Set your own password below — this is a simple deterrent, not real
+   security. Anyone who views this file's source can read it, so don't
+   reuse this password anywhere sensitive. */
+const LOCK_PASSWORD = 'Tracktofix_@001123';
+const LOCK_STORAGE_KEY = 'realpoint_issuetracker_unlocked_v1';
+
+function unlockApp(){
+  document.getElementById('lock-screen').style.display = 'none';
+  document.getElementById('app-root').style.display = 'block';
+}
+function tryUnlock(){
+  const entered = document.getElementById('lock-password').value;
+  const errorEl = document.getElementById('lock-error');
+  if(entered === LOCK_PASSWORD){
+    try{ localStorage.setItem(LOCK_STORAGE_KEY, '1'); }catch(e){}
+    errorEl.textContent = '';
+    unlockApp();
+  } else {
+    errorEl.textContent = 'Incorrect password.';
+    document.getElementById('lock-password').value = '';
+    document.getElementById('lock-password').focus();
+  }
+}
+document.getElementById('lock-submit').addEventListener('click', tryUnlock);
+document.getElementById('lock-password').addEventListener('keydown', e=>{
+  if(e.key === 'Enter') tryUnlock();
+});
+(function checkExistingUnlock(){
+  try{
+    if(localStorage.getItem(LOCK_STORAGE_KEY) === '1'){
+      unlockApp();
+    } else {
+      document.getElementById('lock-password').focus();
+    }
+  }catch(e){
+    document.getElementById('lock-password').focus();
+  }
+})();
+
 const STORAGE_KEY = 'realpoint-issues-v1';
 let issues = [];
 let editingId = null;
@@ -383,7 +465,7 @@ const historicalIssues = [
   { title:'Kids Mode used a static PIN concept instead of a real one-time code', area:'Kids Mode', priority:'high', status:'resolved', desc:'Replaced with an email-based OTP flow (6-digit code sent via Resend to the parent\'s registered email) required both entering and exiting Kids Mode.' },
   { title:'Resend OTP emails failing with non-2xx / ByteString error', area:'Kids Mode / Email', priority:'high', status:'resolved', desc:'Caused by a malformed RESEND_API_KEY secret (trailing whitespace from copy-paste). Fixed by deleting and re-adding the secret cleanly.' },
   { title:'Wrong OTP code showed a generic server-error message', area:'Kids Mode', priority:'medium', status:'resolved', desc:'Invalid/expired/used codes surfaced the same "Edge Function returned a non-2xx" message as real server failures. Fixed by returning structured { success:false, reason } responses and showing specific inline messages per case.' },
-  { title:'Signup confirmation email shows wrong sender name/domain', area:'Email', priority:'medium', status:'progress', desc:'Emails currently show "MoodStream Elevate" via a Lovable/Supabase default sender instead of Realpoint branding on the notify.realpoint.ng subdomain. Blocked on QServer support adding NS + TXT records for the notify subdomain (their DNS panel doesn\'t expose NS records directly) — support ticket submitted, awaiting reply.' },
+  { title:'Signup confirmation email shows wrong sender name/domain', area:'Email', priority:'medium', status:'resolved', desc:'Root cause was two-fold: (1) notify.realpoint.ng subdomain needed NS delegation to Lovable\'s nameservers, blocked for a while on QServer support since their DNS panel doesn\'t expose NS records directly — resolved once QServer added them and propagation completed. (2) The sender display name ("MoodStream Elevate") wasn\'t an editable email field at all — it was being pulled automatically from the Lovable project\'s own name, unchanged since the project was first created, even though in-app branding had moved to "Realpoint" long before. Fixed by renaming the Lovable project itself to Realpoint, which updated the auto-derived sender name.' },
   { title:'Mux upload failed with 401 Unauthorized', area:'Media Pipeline', priority:'critical', status:'resolved', desc:'Caused by an incorrect MUX_TOKEN_ID/MUX_TOKEN_SECRET pair stored as secrets. Fixed by generating a fresh token with Video Read+Write permission and re-adding both secrets cleanly.' },
   { title:'Mood selector in Creator upload form not registering clicks', area:'Creator Studio', priority:'high', status:'resolved', desc:'Mood cards were built as motion.div with a layout prop, which swallowed tap gestures on some input methods. Converted to motion.button matching the working genre-item pattern.' },
   { title:'"Upload title" button silently disabled with no explanation', area:'Creator Studio', priority:'medium', status:'resolved', desc:'Button was correctly gated behind required fields (title, genre, mood, file) but gave zero feedback on why it was disabled. Added inline missing-field hints, visual markers on unmet fields, and a toast on click if still invalid.' },
@@ -398,10 +480,17 @@ const round2Issues = [
   { title:'Discover ranking + Continue Watching rail order', area:'Home', priority:'medium', status:'resolved', desc:'Discover now ranks active-mood titles by a stars+views composite score and auto-slides between top results. Continue Watching repositioned to render directly after Discover. (An earlier overcorrection also touched Trending/Short Escapes/Mood Journey and pulled Discover from other moods — reverted per feedback; only these two changes were intended.)' }
 ];
 
+const round3Issues = [
+  { title:'Invite/reset/signup/magiclink links redirected to Lovable preview domain', area:'Auth', priority:'high', status:'resolved', desc:'Supabase Auth Site URL and per-call redirectTo params still pointed at mood-first.lovable.app instead of realpoint.ng. Fixed by setting Site URL to realpoint.ng, adding it to the redirect allow-list, and hardcoding redirectTo explicitly in invite-creator and other auth calls rather than deriving it from window.location.origin (which leaked whichever domain an admin happened to be testing from).' },
+  { title:'Password reset had no set-new-password form — link just signed user in', area:'Auth', priority:'high', status:'resolved', desc:'No /reset-password route existed at all; Supabase\'s recovery session hydrated silently with nothing to capture the moment and let the user actually choose a new password. Built a dedicated route + form calling supabase.auth.updateUser(), plus a global auth-hash handler that strips tokens from the URL after use and shows a welcome toast for invite links.' },
+  { title:'/reset-password 404 persisted after the fix was "deployed"', area:'Infrastructure', priority:'critical', status:'resolved', desc:'Root cause was NOT the code — Lovable\'s own publish succeeded and was live on realpoint.lovable.app, but realpoint.ng (served via Netlify, connected separately) had not redeployed in 2 days. Investigation found the underlying cause: Netlify\'s GitHub App lost repository access (deploy key/app authorization dropped, likely related to the earlier Netlify subscription lapse), causing every deploy to fail at "preparing repo." Fixed by reauthorizing the Netlify GitHub App with explicit repository access, then triggering a clean deploy. This is the second time a Lovable-vs-Netlify deploy-sync gap caused a "fixed but still broken" report (see also: /admin/creators) — worth deciding whether to move realpoint.ng to Lovable-managed hosting to eliminate this class of bug entirely.' },
+  { title:'Auth email sender name showed "mood-first" instead of "Realpoint"', area:'Email', priority:'medium', status:'resolved', desc:'An earlier fix (renaming the Lovable project) was believed to have resolved this project-wide but had NOT actually been verified against the raw email header — it only appeared fixed because of how one mail client rendered one email type. Real root cause: a hardcoded SITE_NAME = "mood-first" constant in supabase/functions/auth-email-hook/index.ts, shared by all four auth email types (signup, invite, recovery, magic link), untouched by the project rename since it was baked in at scaffold time. Fixed by changing the constant directly to "Realpoint" and redeploying the function. Lesson: verify fixes against the actual raw value sent, not just how a client displays it.' }
+];
+
 async function loadIssues(){
   try{
-    const res = await window.storage.get(STORAGE_KEY, false);
-    issues = res && res.value ? JSON.parse(res.value) : null;
+    const raw = localStorage.getItem(STORAGE_KEY);
+    issues = raw ? JSON.parse(raw) : null;
   }catch(e){
     issues = null;
   }
@@ -417,8 +506,7 @@ async function loadIssues(){
   // one-time import of historical (already-resolved-by-the-time-tracker-existed) issues
   let migrated = false;
   try{
-    const flag = await window.storage.get('realpoint-historical-imported-v1', false);
-    migrated = !!(flag && flag.value === 'true');
+    migrated = localStorage.getItem('realpoint-historical-imported-v1') === 'true';
   }catch(e){ migrated = false; }
 
   if(!migrated){
@@ -430,7 +518,43 @@ async function loadIssues(){
     }));
     issues = issues.concat(imported);
     await saveIssues();
-    try{ await window.storage.set('realpoint-historical-imported-v1', 'true', false); }catch(e){}
+    try{ localStorage.setItem('realpoint-historical-imported-v1', 'true'); }catch(e){}
+  }
+
+  // one-time import of round 2 (security regressions + Home fixes)
+  let migrated2 = false;
+  try{
+    migrated2 = localStorage.getItem('realpoint-round2-imported-v1') === 'true';
+  }catch(e){ migrated2 = false; }
+
+  if(!migrated2 && typeof round2Issues !== 'undefined'){
+    const base2 = Date.now() - round2Issues.length * 3600 * 1000;
+    const imported2 = round2Issues.map((it,i)=>({
+      id: 'r2-'+i+'-'+Date.now(),
+      ...it,
+      createdAt: new Date(base2 + i * 3600 * 1000).toISOString()
+    }));
+    issues = issues.concat(imported2);
+    await saveIssues();
+    try{ localStorage.setItem('realpoint-round2-imported-v1', 'true'); }catch(e){}
+  }
+
+  // one-time import of round 3 (auth redirect / deploy-sync / email sender saga)
+  let migrated3 = false;
+  try{
+    migrated3 = localStorage.getItem('realpoint-round3-imported-v1') === 'true';
+  }catch(e){ migrated3 = false; }
+
+  if(!migrated3 && typeof round3Issues !== 'undefined'){
+    const base3 = Date.now() - round3Issues.length * 3600 * 1000;
+    const imported3 = round3Issues.map((it,i)=>({
+      id: 'r3-'+i+'-'+Date.now(),
+      ...it,
+      createdAt: new Date(base3 + i * 3600 * 1000).toISOString()
+    }));
+    issues = issues.concat(imported3);
+    await saveIssues();
+    try{ localStorage.setItem('realpoint-round3-imported-v1', 'true'); }catch(e){}
   }
 
   document.getElementById('loading').style.display='none';
@@ -440,7 +564,7 @@ async function loadIssues(){
 
 async function saveIssues(){
   try{
-    await window.storage.set(STORAGE_KEY, JSON.stringify(issues), false);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(issues));
   }catch(e){
     console.error('Failed to save issues', e);
   }
@@ -608,4 +732,3 @@ loadIssues();
 </script>
 </body>
 </html>
-<!-- test edit 07/13/2026 19:58:37 -->
